@@ -244,6 +244,8 @@ let isProcessing = false; // true while a request to the model is in flight —
 // request before the first one has finished.
 let lastSentText = ""; // guards against the exact same utterance firing twice
 let lastSentAt = 0;
+let ttsGeneration = 0; // increments each speak() call so a stale completion
+                        // (native callback or fallback timer) can't fire late
 
 const messagesEl = document.getElementById('messages');
 const orb = document.getElementById('orb');
@@ -286,17 +288,29 @@ function speak(text, langCode){
   // MainActivity.java and routes speech through Android's native
   // text-to-speech engine, since WebView doesn't reliably support
   // window.speechSynthesis the way the full Chrome browser does.
+  ttsGeneration++;
+  const myGeneration = ttsGeneration;
+  let finished = false;
+  function finishSpeaking(){
+    if(finished || myGeneration !== ttsGeneration) return; // superseded by a newer speak() call
+    finished = true;
+    setOrbState('idle');
+    restartListeningIfActive();
+  }
+
   if(window.AndroidTTS && typeof window.AndroidTTS.speak === 'function'){
     setOrbState('speaking');
+    // MainActivity.java calls this the instant native speech playback actually
+    // finishes (or errors) — this is the real signal, not a guess.
+    window.onNovaSpeechDone = finishSpeaking;
     window.AndroidTTS.speak(text || '', langCode || 'en-US');
-    // No native completion callback is wired up, so estimate how long the
-    // utterance likely takes to speak and resume listening after that.
-    const estimatedMs = Math.max(60000, Math.min(120000, (text || '').length * 60));
-    setTimeout(()=>{ setOrbState('idle'); restartListeningIfActive(); }, estimatedMs);
+    // Safety net only, in case the native callback never fires for some reason.
+    const fallbackMs = Math.max(4000, Math.min(20000, (text || '').length * 80));
+    setTimeout(finishSpeaking, fallbackMs);
     return;
   }
   if(!('speechSynthesis' in window)){
-    restartListeningIfActive();
+    finishSpeaking();
     return;
   }
   window.speechSynthesis.cancel();
@@ -305,7 +319,8 @@ function speak(text, langCode){
   if(voice) utter.voice = voice;
   utter.lang = langCode || 'en-US';
   utter.onstart = ()=>{ setOrbState('speaking'); };
-  utter.onend = ()=>{ setOrbState('idle'); restartListeningIfActive(); };
+  utter.onend = finishSpeaking;
+  utter.onerror = finishSpeaking;
   window.speechSynthesis.speak(utter);
 }
 
