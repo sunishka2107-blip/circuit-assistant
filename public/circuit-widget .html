@@ -60,13 +60,11 @@
     border-radius:4px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;
   }
   main{
-    flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:1px;background:var(--line);
-    min-height:0;
+    flex:1;display:flex;flex-direction:column;background:var(--bg);
+    min-height:0;max-width:760px;margin:0 auto;width:100%;
   }
-  @media (max-width:860px){ main{grid-template-columns:1fr;} }
 
-  .chat-col{background:var(--bg);display:flex;flex-direction:column;min-height:0;}
-  .cart-col{background:var(--bg);display:flex;flex-direction:column;min-height:0;}
+  .chat-col{background:var(--bg);display:flex;flex-direction:column;min-height:0;flex:1;}
 
   .col-label{
     font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);
@@ -120,31 +118,6 @@
   }
   #sendBtn:disabled{opacity:0.5;cursor:default;}
 
-  /* Cart column */
-  #cartItems{flex:1;overflow-y:auto;padding:4px 20px;}
-  .cart-empty{color:var(--muted);font-size:13px;font-family:'IBM Plex Mono',monospace;padding:20px 0;}
-  .cart-row{
-    display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
-    padding:10px 0;border-bottom:1px solid var(--line);
-  }
-  .cart-row .name{font-size:13.5px;}
-  .cart-row .spec{display:block;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin-top:2px;}
-  .cart-row .qty{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);}
-  .cart-row .price{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;color:var(--amber);}
-  .cart-total{
-    border-top:1px solid var(--amber-dim);padding:14px 20px;
-    display:flex;justify-content:space-between;align-items:center;
-    font-family:'IBM Plex Mono',monospace;
-  }
-  .cart-total .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;}
-  .cart-total .value{font-size:20px;color:var(--amber);font-weight:500;}
-  .quote-btn{
-    margin:0 20px 18px;padding:11px;text-align:center;border:1px solid var(--teal);color:var(--teal);
-    border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.5px;
-    text-transform:uppercase;cursor:pointer;background:none;
-  }
-  .quote-btn:hover{background:var(--teal-dim);}
-
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
 </style>
@@ -181,16 +154,6 @@
       <button id="sendBtn">Send</button>
     </div>
   </div>
-
-  <div class="cart-col">
-    <div class="col-label">Quote</div>
-    <div id="cartItems"><div class="cart-empty">No items yet — ask Circuit for a recommendation.</div></div>
-    <div class="cart-total">
-      <span class="label">Total</span>
-      <span class="value" id="cartTotal">$0.00</span>
-    </div>
-    <button class="quote-btn" id="quoteBtn">Finalize Quote</button>
-  </div>
 </main>
 
 <script>
@@ -215,7 +178,6 @@ const CATALOG = [
   {id:"SMART-PLUG", name:"Smart Plug Outdoor", category:"Smart Home", price:16.99, unit:"each", specs:"Wi-Fi controlled, IP65 weatherproof"},
   {id:"TOOL-VOLT-TESTER", name:"Non-Contact Voltage Tester", category:"Tools & Safety", price:12.99, unit:"each", specs:"Audible + visual alert, CAT III"},
 ];
-const catalogById = Object.fromEntries(CATALOG.map(p=>[p.id,p]));
 
 // ---------- Language options for voice input ----------
 const LANGS = [
@@ -231,7 +193,6 @@ LANGS.forEach(([code,label])=>{
 langSelect.value = "auto";
 
 // ---------- State ----------
-let cart = {}; // product_id -> quantity
 let history = []; // {role:'user'|'assistant', content: text}
 let lastDetectedLang = "en";
 
@@ -258,51 +219,6 @@ function addMessage(role, text){
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function renderCart(){
-  const cartItems = document.getElementById('cartItems');
-  const ids = Object.keys(cart).filter(id => cart[id] > 0);
-  if(ids.length === 0){
-    cartItems.innerHTML = '<div class="cart-empty">No items yet — ask Circuit for a recommendation.</div>';
-    document.getElementById('cartTotal').textContent = '$0.00';
-    return;
-  }
-  cartItems.innerHTML = '';
-  let total = 0;
-  ids.forEach(id=>{
-    const p = catalogById[id];
-    if(!p) return;
-    const qty = cart[id];
-    const lineTotal = p.price * qty;
-    total += lineTotal;
-    const row = document.createElement('div');
-    row.className = 'cart-row';
-    row.innerHTML = `
-      <div class="name">${p.name}<span class="spec">${p.specs}</span></div>
-      <div class="qty">×${qty}</div>
-      <div class="price">$${lineTotal.toFixed(2)}</div>
-    `;
-    cartItems.appendChild(row);
-  });
-  document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
-}
-
-function applyCartActions(actions){
-  if(!Array.isArray(actions)) return;
-  actions.forEach(a=>{
-    if(!a || !a.product_id || !catalogById[a.product_id]) return;
-    const id = a.product_id;
-    const qty = Number(a.quantity) || 1;
-    if(a.action === 'add'){
-      cart[id] = (cart[id]||0) + qty;
-    } else if(a.action === 'remove'){
-      delete cart[id];
-    } else if(a.action === 'set_quantity'){
-      if(qty <= 0){ delete cart[id]; } else { cart[id] = qty; }
-    }
-  });
-  renderCart();
-}
-
 // ---------- Text-to-speech ----------
 let voicesCache = [];
 function loadVoices(){ voicesCache = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
@@ -317,15 +233,28 @@ function pickVoice(langCode){
          voicesCache.find(v=>v.lang.toLowerCase().startsWith(base.slice(0,2))) || null;
 }
 function speak(text, langCode){
-  if(!('speechSynthesis' in window)) return;
+  if(!('speechSynthesis' in window)){
+    restartListeningIfActive();
+    return;
+  }
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   const voice = pickVoice(langCode);
   if(voice) utter.voice = voice;
   utter.lang = langCode || 'en-US';
   utter.onstart = ()=>{ setOrbState('speaking'); };
-  utter.onend = ()=>{ setOrbState('idle'); };
+  utter.onend = ()=>{ setOrbState('idle'); restartListeningIfActive(); };
   window.speechSynthesis.speak(utter);
+}
+
+function restartListeningIfActive(){
+  // Continues the hands-free loop after Circuit finishes speaking, unless the
+  // session was ended (manual stop, "done"/"okay", or a mic error).
+  if(!voiceSessionActive || !recognizer || isListening) return;
+  setTimeout(()=>{
+    if(!voiceSessionActive || isListening) return;
+    try{ recognizer.start(); }catch(e){ /* already started */ }
+  }, 400);
 }
 
 function setOrbState(state){
@@ -341,6 +270,20 @@ function setOrbState(state){
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
 let isListening = false;
+let voiceSessionActive = false; // true while in a hands-free continuous voice loop
+
+// Phrases that end the hands-free loop instead of being sent to Circuit as a
+// question. Checked against the whole trimmed transcript, case-insensitive,
+// with trailing punctuation ignored — so "Okay.", "done", "That's all" all match.
+const STOP_PHRASES = [
+  'done', 'ok', 'okay', "that's all", 'thats all', "that's it", 'thats it',
+  'stop', 'stop listening', "i'm done", 'im done', 'no thanks', 'nothing else'
+];
+function isStopPhrase(transcript){
+  const cleaned = transcript.trim().toLowerCase().replace(/[.!?]+$/, '');
+  return STOP_PHRASES.includes(cleaned);
+}
+
 if(SpeechRecognition){
   recognizer = new SpeechRecognition();
   recognizer.continuous = false;
@@ -349,12 +292,20 @@ if(SpeechRecognition){
 
   recognizer.onstart = ()=>{ isListening = true; setOrbState('listening'); };
   recognizer.onerror = (e)=>{
-    isListening = false; setOrbState('idle');
+    isListening = false;
+    voiceSessionActive = false; // don't keep retrying forever on repeated errors
+    setOrbState('idle');
     addMessage('system', 'Mic error: ' + e.error + ' — you can type instead.');
   };
   recognizer.onend = ()=>{ isListening = false; if(orb.classList.contains('listening')) setOrbState('idle'); };
   recognizer.onresult = (event)=>{
     const transcript = event.results[0][0].transcript;
+    if(isStopPhrase(transcript)){
+      voiceSessionActive = false;
+      addMessage('system', 'Okay — ended the voice session. Tap the mic anytime to start again.');
+      setOrbState('idle');
+      return;
+    }
     handleUserInput(transcript);
   };
 } else {
@@ -363,7 +314,12 @@ if(SpeechRecognition){
 
 orb.addEventListener('click', ()=>{
   if(!recognizer){ textInput.focus(); return; }
-  if(isListening){ recognizer.stop(); return; }
+  if(isListening){
+    voiceSessionActive = false; // manual stop also ends the hands-free loop
+    recognizer.stop();
+    return;
+  }
+  voiceSessionActive = true;
   const chosen = langSelect.value;
   recognizer.lang = chosen === 'auto' ? (navigator.language || 'en-US') : chosen;
   try{ recognizer.start(); }catch(e){ /* already started */ }
@@ -373,6 +329,7 @@ sendBtn.addEventListener('click', ()=>{
   const val = textInput.value.trim();
   if(!val) return;
   textInput.value = '';
+  voiceSessionActive = false; // switching to typing ends any hands-free voice loop
   handleUserInput(val);
 });
 textInput.addEventListener('keydown', (e)=>{
@@ -381,24 +338,20 @@ textInput.addEventListener('keydown', (e)=>{
 
 // ---------- Claude API call ----------
 function buildSystemPrompt(){
-  return `You are Circuit, a knowledgeable, friendly multilingual sales assistant for an electrical supply store.
+  return `You are Circuit, a knowledgeable, friendly multilingual voice assistant for an electrical supply store.
 
 PRODUCT CATALOG (JSON):
 ${JSON.stringify(CATALOG)}
 
-CURRENT CART (product_id -> quantity):
-${JSON.stringify(cart)}
-
 Your job:
 1. Detect the language of the user's LATEST message, independent of prior turns. Respond ENTIRELY in that language (including product names/specs, translated naturally).
 2. Answer product questions using ONLY the catalog above (specs, pricing, compatibility, basic safety/code notes). If something isn't in the catalog, say so honestly and suggest the closest available item.
-3. Proactively recommend suitable products when the user describes a need (e.g. "I need to wire a bedroom outlet" -> suggest wire gauge, outlet, breaker).
-4. Manage the cart via cart_actions: "add" (with quantity), "remove", or "set_quantity". Only touch items relevant to the user's latest request.
-5. When the user asks to finalize, check out, or get a quote, set quote_ready to true and write an itemized summary with line totals and grand total in the reply, in the detected language.
-6. Never give electrical safety-critical instructions that would require a licensed electrician to perform (e.g. panel wiring steps) — recommend consulting a licensed electrician for installation, while still being helpful about product selection.
+3. Proactively recommend suitable products when the user describes a need (e.g. "I need to wire a bedroom outlet" -> suggest wire gauge, outlet, breaker), mentioning names and prices conversationally in your reply.
+4. Keep replies conversational and concise, since they'll often be read aloud — avoid long bullet lists.
+5. Never give electrical safety-critical instructions that would require a licensed electrician to perform (e.g. panel wiring steps) — recommend consulting a licensed electrician for installation, while still being helpful about product selection.
 
 Respond with STRICT JSON ONLY, no markdown fences, no commentary outside the JSON, matching exactly this schema:
-{"detected_language": "BCP-47 code like en-US, es-ES, fr-FR", "language_name": "English name of the language", "reply": "assistant reply text, entirely in detected_language", "cart_actions": [{"action":"add|remove|set_quantity","product_id":"...","quantity":1}], "quote_ready": false}`;
+{"detected_language": "BCP-47 code like en-US, es-ES, fr-FR", "language_name": "English name of the language", "reply": "assistant reply text, entirely in detected_language"}`;
 }
 
 async function callClaude(userText){
@@ -434,11 +387,7 @@ async function handleUserInput(text){
     lastDetectedLang = result.detected_language || 'en-US';
     addMessage('assistant', result.reply || '(no reply)');
     history.push({role:'assistant', content: result.reply || ''});
-    applyCartActions(result.cart_actions);
     speak(result.reply || '', lastDetectedLang);
-    if(result.quote_ready){
-      statusText.textContent = 'Quote ready — see the panel on the right.';
-    }
   }catch(err){
     console.error(err);
     addMessage('system', 'Something went wrong talking to Circuit: ' + err.message);
@@ -447,10 +396,6 @@ async function handleUserInput(text){
     sendBtn.disabled = false;
   }
 }
-
-document.getElementById('quoteBtn').addEventListener('click', ()=>{
-  handleUserInput('Please finalize my quote with everything currently in my cart.');
-});
 
 // ---------- Embedded mode (iframe integration) ----------
 if(window.self !== window.top){
@@ -464,7 +409,7 @@ if(window.self !== window.top){
 }
 
 // Welcome message
-addMessage('assistant', "Hi, I'm Circuit — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language, and I'll help you build a quote.");
+addMessage('assistant', "Hi, I'm Circuit — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language. Tap the mic to talk hands-free — I'll keep listening after each reply until you say \"done\" or \"okay,\" or tap the mic again.");
 </script>
 </body>
 </html>
