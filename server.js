@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public')); // put circuit-widget.html, circuit-embed.js etc. in ./public
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 app.post('/api/chat', async (req, res) => {
   try {
