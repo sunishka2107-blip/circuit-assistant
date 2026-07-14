@@ -1,0 +1,16 @@
+id,name,category,price,unit,specs,description
+EL-001,LED Bulb A19 9W Warm White,Lighting,3.49,each,"800 lumens, E26 base, dimmable","Standard household bulb replacement, 15,000-hour rated life"
+EL-002,LED Flood Light PAR38 15W,Lighting,8.99,each,"1200 lumens, outdoor rated IP65","Weatherproof, suited for porches and security lighting"
+EL-003,12 AWG THHN Copper Wire,Wiring & Cable,0.42,ft,"600V rated, solid conductor","For 20A branch circuits, sold by the foot"
+EL-004,14/2 NM-B Romex Cable,Wiring & Cable,0.55,ft,"15A circuits, indoor residential",Standard non-metallic sheathed cable for home wiring
+EL-005,Single Pole Switch 15A,Switches & Outlets,2.19,each,"120/277V, standard toggle",Basic on/off wall switch for lighting circuits
+EL-006,GFCI Outlet 20A,Switches & Outlets,14.99,each,"Ground fault protection, weather-resistant","Required near sinks, bathrooms, and outdoor areas"
+EL-007,USB-C Charging Outlet,Switches & Outlets,19.99,each,20W fast charge + standard receptacle,Combo outlet for modern device charging
+EL-008,Single Pole Breaker 20A,Circuit Protection,6.49,each,Fits QO/Homeline panels,Standard branch circuit breaker
+EL-009,Double Pole Breaker 30A,Circuit Protection,18.99,each,240V rated,"For dryers, water heaters, and AC units"
+EL-010,AFCI Combo Breaker 15A,Circuit Protection,42.99,each,Arc-fault protection,Code-required for many bedroom and living space circuits
+EL-011,"100A Main Breaker Panel, 20-space",Panels & Boards,89.99,each,"Indoor rated, includes main breaker",Suitable for small homes or sub-panel use
+EL-012,"200A Main Breaker Panel, 40-space",Panels & Boards,164.99,each,Standard residential service,Typical main service panel for a full-size home
+EL-013,Smart Wi-Fi Dimmer Switch,Smart Home,24.99,each,"App + voice control, no hub required",Works with major smart home ecosystems
+EL-014,Smart Plug Outdoor,Smart Home,16.99,each,"Wi-Fi controlled, IP65 weatherproof",For outdoor lighting or seasonal decorations
+EL-015,Non-Contact Voltage Tester,Tools & Safety,12.99,each,"Audible + visual alert, CAT III rated",Basic safety tool for checking live wires before work

@@ -158,26 +158,66 @@
 
 <script>
 // ---------- Product catalog ----------
-const CATALOG = [
-  {id:"LED-A19-9W", name:"LED Bulb A19 9W Warm White", category:"Lighting", price:3.49, unit:"each", specs:"800 lumens, E26 base, dimmable"},
-  {id:"LED-PAR38-15W", name:"LED Flood Light PAR38 15W", category:"Lighting", price:8.99, unit:"each", specs:"1200 lumens, outdoor rated IP65"},
-  {id:"LED-PANEL-2x4", name:"LED Troffer Panel 2x4ft 40W", category:"Lighting", price:34.99, unit:"each", specs:"4000 lumens, drop-ceiling"},
-  {id:"WIRE-12AWG-THHN", name:"12 AWG THHN Copper Wire", category:"Wiring & Cable", price:0.42, unit:"ft", specs:"600V, solid, for 20A circuits"},
-  {id:"WIRE-14AWG-NM", name:"14/2 NM-B Romex Cable", category:"Wiring & Cable", price:0.55, unit:"ft", specs:"15A circuits, indoor residential"},
-  {id:"CABLE-CAT6", name:"Cat6 Ethernet Cable", category:"Wiring & Cable", price:0.28, unit:"ft", specs:"550MHz, plenum-rated available"},
-  {id:"SW-SP-15A", name:"Single Pole Switch 15A", category:"Switches & Outlets", price:2.19, unit:"each", specs:"Standard toggle, 120/277V"},
-  {id:"SW-3WAY-15A", name:"3-Way Switch 15A", category:"Switches & Outlets", price:3.49, unit:"each", specs:"For stairwell/hallway circuits"},
-  {id:"OUT-GFCI-20A", name:"GFCI Outlet 20A", category:"Switches & Outlets", price:14.99, unit:"each", specs:"Ground fault protection, weather-resistant"},
-  {id:"OUT-USB-C", name:"USB-C Charging Outlet", category:"Switches & Outlets", price:19.99, unit:"each", specs:"20W fast charge + standard receptacle"},
-  {id:"BRK-1P-20A", name:"Single Pole Breaker 20A", category:"Circuit Protection", price:6.49, unit:"each", specs:"Fits QO/Homeline panels"},
-  {id:"BRK-2P-30A", name:"Double Pole Breaker 30A", category:"Circuit Protection", price:18.99, unit:"each", specs:"For dryers, AC units"},
-  {id:"AFCI-1P-15A", name:"AFCI/CAFCI Combo Breaker 15A", category:"Circuit Protection", price:42.99, unit:"each", specs:"Arc-fault protection, code required"},
-  {id:"PANEL-100A", name:"100A Main Breaker Panel, 20-space", category:"Panels & Boards", price:89.99, unit:"each", specs:"Indoor rated, includes main breaker"},
-  {id:"PANEL-200A", name:"200A Main Breaker Panel, 40-space", category:"Panels & Boards", price:164.99, unit:"each", specs:"Standard residential service"},
-  {id:"SMART-SW-WIFI", name:"Smart Wi-Fi Dimmer Switch", category:"Smart Home", price:24.99, unit:"each", specs:"App + voice control, no hub needed"},
-  {id:"SMART-PLUG", name:"Smart Plug Outdoor", category:"Smart Home", price:16.99, unit:"each", specs:"Wi-Fi controlled, IP65 weatherproof"},
-  {id:"TOOL-VOLT-TESTER", name:"Non-Contact Voltage Tester", category:"Tools & Safety", price:12.99, unit:"each", specs:"Audible + visual alert, CAT III"},
-];
+// Loaded at startup from electrical-items-dataset.csv (same folder as this
+// file) instead of being hardcoded — edit that CSV to change what Nova knows
+// about, no code changes needed.
+let CATALOG = [];
+let catalogLoaded = false;
+
+function splitCSVLine(line){
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++){
+    const c = line[i];
+    if(c === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if(c === ',' && !inQuotes){
+      result.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l => l.length > 0);
+  if(lines.length === 0) return [];
+  const headers = splitCSVLine(lines[0]).map(h => h.trim());
+  const rows = [];
+  for(let i = 1; i < lines.length; i++){
+    const values = splitCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = (values[idx] || '').trim(); });
+    rows.push(row);
+  }
+  return rows;
+}
+
+async function loadCatalog(){
+  try{
+    const res = await fetch('electrical-items-dataset.csv');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    CATALOG = rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      price: parseFloat(r.price) || 0,
+      unit: r.unit,
+      specs: r.specs,
+      description: r.description
+    }));
+    catalogLoaded = true;
+  }catch(e){
+    console.error('Failed to load electrical-items-dataset.csv', e);
+    addMessage('system', 'Could not load the product catalog (electrical-items-dataset.csv) — check it is uploaded next to circuit-widget.html.');
+  }
+}
 
 // ---------- Language options for voice input ----------
 const LANGS = [
@@ -313,6 +353,7 @@ if(SpeechRecognition){
 }
 
 orb.addEventListener('click', ()=>{
+  if(!catalogLoaded){ addMessage('system', 'Still loading the product catalog — one moment.'); return; }
   if(!recognizer){ textInput.focus(); return; }
   if(isListening){
     voiceSessionActive = false; // manual stop also ends the hands-free loop
@@ -326,6 +367,7 @@ orb.addEventListener('click', ()=>{
 });
 
 sendBtn.addEventListener('click', ()=>{
+  if(!catalogLoaded){ addMessage('system', 'Still loading the product catalog — one moment.'); return; }
   const val = textInput.value.trim();
   if(!val) return;
   textInput.value = '';
@@ -409,7 +451,13 @@ if(window.self !== window.top){
 }
 
 // Welcome message
-addMessage('assistant', "Hi, I'm Nova — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language. Tap the mic to talk hands-free — I'll keep listening after each reply until you say \"done\" or \"okay,\" or tap the mic again.");
+// Startup: load the catalog, then greet
+(async function init(){
+  sendBtn.disabled = true;
+  await loadCatalog();
+  sendBtn.disabled = false;
+  addMessage('assistant', "Hi, I'm Nova — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language. Tap the mic to talk hands-free — I'll keep listening after each reply until you say \"done\" or \"okay,\" or tap the mic again.");
+})();
 </script>
 </body>
 </html>
