@@ -239,6 +239,11 @@ langSelect.value = "auto";
 // ---------- State ----------
 let history = []; // {role:'user'|'assistant', content: text}
 let lastDetectedLang = "en";
+let isProcessing = false; // true while a request to the model is in flight —
+// prevents a second recognizer result or stray tap from firing a duplicate
+// request before the first one has finished.
+let lastSentText = ""; // guards against the exact same utterance firing twice
+let lastSentAt = 0;
 
 const messagesEl = document.getElementById('messages');
 const orb = document.getElementById('orb');
@@ -307,9 +312,9 @@ function speak(text, langCode){
 function restartListeningIfActive(){
   // Continues the hands-free loop after Nova finishes speaking, unless the
   // session was ended (manual stop, "done"/"okay", or a mic error).
-  if(!voiceSessionActive || !recognizer || isListening) return;
+  if(!voiceSessionActive || !recognizer || isListening || isProcessing) return;
   setTimeout(()=>{
-    if(!voiceSessionActive || isListening) return;
+    if(!voiceSessionActive || isListening || isProcessing) return;
     try{ recognizer.start(); }catch(e){ /* already started */ }
   }, 400);
 }
@@ -357,6 +362,7 @@ if(SpeechRecognition){
   recognizer.onend = ()=>{ isListening = false; if(orb.classList.contains('listening')) setOrbState('idle'); };
   recognizer.onresult = (event)=>{
     const transcript = event.results[0][0].transcript;
+    if(isProcessing) return; // ignore anything picked up while Nova is still answering
     if(isStopPhrase(transcript)){
       voiceSessionActive = false;
       addMessage('system', 'Okay — ended the voice session. Tap the mic anytime to start again.');
@@ -371,6 +377,7 @@ if(SpeechRecognition){
 
 orb.addEventListener('click', ()=>{
   if(!catalogLoaded){ addMessage('system', 'Still loading the product catalog — one moment.'); return; }
+  if(isProcessing){ return; } // ignore taps while Nova is already answering
   if(!recognizer){ textInput.focus(); return; }
   if(isListening){
     voiceSessionActive = false; // manual stop also ends the hands-free loop
@@ -385,6 +392,7 @@ orb.addEventListener('click', ()=>{
 
 sendBtn.addEventListener('click', ()=>{
   if(!catalogLoaded){ addMessage('system', 'Still loading the product catalog — one moment.'); return; }
+  if(isProcessing) return; // ignore double-clicks / double-taps while already answering
   const val = textInput.value.trim();
   if(!val) return;
   textInput.value = '';
@@ -462,6 +470,16 @@ async function callClaude(userText){
 }
 
 async function handleUserInput(text){
+  if(isProcessing) return; // belt-and-suspenders: never process two requests at once
+  const now = Date.now();
+  if(text.trim().toLowerCase() === lastSentText && (now - lastSentAt) < 4000){
+    return; // the exact same message arrived again within 4s — almost certainly
+             // a duplicate mic/tap event, not a genuine repeat question
+  }
+  lastSentText = text.trim().toLowerCase();
+  lastSentAt = now;
+  isProcessing = true;
+
   addMessage('user', text);
   history.push({role:'user', content:text});
   setOrbState('thinking');
@@ -478,6 +496,7 @@ async function handleUserInput(text){
     setOrbState('idle');
   }finally{
     sendBtn.disabled = false;
+    isProcessing = false;
   }
 }
 
