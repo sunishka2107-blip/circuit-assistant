@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuit — Multilingual Electrical Sales Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16181c; --panel:#1e2126; --panel-2:#24272d; --line:#34383f;
+    --text:#eceef1; --muted:#8b929e; --amber:#e8a33d; --amber-dim:#6b5327;
+    --teal:#4fd1c5; --teal-dim:#234846;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:
+      linear-gradient(var(--bg), var(--bg)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 24px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 24px);
+    color:var(--text); font-family:'Inter',sans-serif;
+  }
+  h1,h2,h3{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--teal);}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 28px;}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--line);}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .mark{width:34px;height:34px;border-radius:6px;background:var(--panel-2);border:1px solid var(--amber);
+    display:flex;align-items:center;justify-content:center;color:var(--amber);font-size:13px;}
+  nav .brand h1{font-size:24px;font-weight:700;}
+  nav a.cta{
+    background:var(--amber);color:#1a1300;padding:9px 18px;border-radius:6px;text-decoration:none;
+    font-weight:600;font-size:13px;font-family:'Inter',sans-serif;
+  }
+  nav .links{display:flex;gap:24px;font-size:13px;color:var(--muted);}
+  nav .links a{color:var(--muted);text-decoration:none;}
+  @media (max-width:720px){ nav .links{display:none;} }
+
+  .hero{padding:76px 28px 40px;}
+  .hero-grid{max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.15fr 0.85fr;gap:56px;align-items:start;}
+  @media (max-width:900px){ .hero-grid{grid-template-columns:1fr;} }
+  .eyebrow{font-size:12px;color:var(--teal);letter-spacing:1.5px;margin-bottom:14px;}
+  .hero h2{font-size:56px;line-height:1.02;font-weight:700;}
+  .hero h2 span{color:var(--amber);}
+  .hero p.lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:480px;margin:22px 0 30px;}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn-primary{background:var(--amber);color:#1a1300;padding:13px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;}
+  .btn-ghost{border:1px solid var(--line);color:var(--text);padding:13px 24px;border-radius:6px;text-decoration:none;font-size:14px;}
+  .lang-strip{margin-top:38px;display:flex;flex-wrap:wrap;gap:8px;}
+  .lang-strip span{
+    font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-family:'IBM Plex Mono',monospace;
+  }
+
+  .demo-frame-outer{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.4);
+  }
+  .demo-frame-outer .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding:0 6px 10px;}
+  .demo-frame-outer iframe{width:100%;height:600px;border:none;border-radius:10px;background:var(--bg);}
+
+  section{padding:70px 28px;border-top:1px solid var(--line);}
+  .section-head{max-width:640px;margin-bottom:44px;}
+  .section-head .eyebrow{margin-bottom:10px;}
+  .section-head h3{font-size:34px;}
+  .section-head p{color:var(--muted);margin-top:12px;line-height:1.6;}
+
+  .features{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  @media (max-width:900px){ .features{grid-template-columns:repeat(2,1fr);} }
+  .feature{background:var(--panel);padding:26px 22px;}
+  .feature .num{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:12px;}
+  .feature h4{font-family:'Barlow Condensed',sans-serif;font-size:20px;margin:10px 0 8px;text-transform:none;font-weight:600;}
+  .feature p{color:var(--muted);font-size:13.5px;line-height:1.55;margin:0;}
+
+  .integrate-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  @media (max-width:900px){ .integrate-grid{grid-template-columns:1fr;} }
+  .code-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .code-card .head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .code-card .head h4{font-size:17px;font-weight:600;font-family:'Barlow Condensed',sans-serif;text-transform:none;}
+  .code-card .head p{margin:2px 0 0;color:var(--muted);font-size:12.5px;}
+  .code-card pre{
+    margin:0;padding:18px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    color:#c9e8e4;line-height:1.6;background:#101214;
+  }
+  .copy-btn{
+    background:none;border:1px solid var(--teal);color:var(--teal);font-family:'IBM Plex Mono',monospace;
+    font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;
+  }
+  .copy-btn:hover{background:var(--teal-dim);}
+  .integrate-note{color:var(--muted);font-size:13px;margin-top:20px;line-height:1.6;}
+  .integrate-note code{background:var(--panel-2);padding:2px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+
+  .options-table{width:100%;border-collapse:collapse;margin-top:34px;font-size:13.5px;}
+  .options-table th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 14px;border-bottom:1px solid var(--line);}
+  .options-table td{padding:12px 14px;border-bottom:1px solid var(--line);}
+  .options-table td:first-child{font-family:'IBM Plex Mono',monospace;color:var(--amber);}
+
+  footer{padding:36px 28px;text-align:center;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><div class="mark">⏚</div><h1>Circuit</h1></div>
+  <div class="links">
+    <a href="#demo">Live demo</a>
+    <a href="#features">Features</a>
+    <a href="#integrate">Integrate</a>
+  </div>
+  <a class="cta" href="#integrate">Get the embed code</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow mono">VOICE-FIRST · MULTILINGUAL · PRODUCT-AWARE</div>
+      <h2>A sales assistant that speaks <span>every customer's</span> language.</h2>
+      <p class="lead">Circuit answers electrical product questions, recommends the right part for the job, and builds a live quote — by voice or text, automatically in whatever language the customer uses.</p>
+      <div class="hero-ctas">
+        <a class="btn-primary" href="#demo">Try the live demo</a>
+        <a class="btn-ghost" href="#integrate">Add to your site</a>
+      </div>
+      <div class="lang-strip">
+        <span>EN</span><span>ES</span><span>FR</span><span>DE</span><span>PT</span><span>HI</span><span>ZH</span><span>JA</span><span>KO</span><span>AR</span><span>+ any language</span>
+      </div>
+    </div>
+    <div class="demo-frame-outer" id="demo">
+      <div class="tag">LIVE DEMO — try asking about wiring, breakers, or lighting</div>
+      <iframe src="circuit-widget.html" title="Circuit live demo"></iframe>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-head">
+    <div class="eyebrow mono">WHAT IT DOES</div>
+    <h3>Built for the electrical counter, not a generic chatbot.</h3>
+    <p>Every response is grounded in your catalog — specs, pricing, compatibility — and every conversation ends with a real, itemized quote.</p>
+  </div>
+  <div class="features">
+    <div class="feature"><div class="num mono">01</div><h4>Auto language match</h4><p>Detects the language of each message and replies — and speaks — in that same language, no menu required.</p></div>
+    <div class="feature"><div class="num mono">02</div><h4>Catalog-grounded answers</h4><p>Recommendations and specs come straight from your product data, not a generic web answer.</p></div>
+    <div class="feature"><div class="num mono">03</div><h4>Live running quote</h4><p>Items get added, swapped, or removed as the conversation evolves, with a running total shown at all times.</p></div>
+    <div class="feature"><div class="num mono">04</div><h4>Voice or text</h4><p>Customers can talk or type — Circuit responds the same way either way, and reads its replies back aloud.</p></div>
+  </div>
+</section>
+
+<section id="integrate">
+  <div class="section-head">
+    <div class="eyebrow mono">DROP-IN INTEGRATION</div>
+    <h3>Add Circuit to any site in two lines.</h3>
+    <p>Host <code class="mono">circuit-widget.html</code> and <code class="mono">circuit-embed.js</code> wherever your other static assets live, then choose one of the two integration paths below.</p>
+  </div>
+
+  <div class="integrate-grid">
+    <div class="code-card">
+      <div class="head">
+        <div><h4>Floating launcher (recommended)</h4><p>Adds a mic bubble that opens Circuit in a corner panel — like a chat widget.</p></div>
+        <button class="copy-btn" data-copy-target="snippet-launcher">Copy</button>
+      </div>
+      <pre id="snippet-launcher">&lt;script src="https://YOUR-HOST/circuit-embed.js"
+        data-src="https://YOUR-HOST/circuit-widget.html"
+        data-position="bottom-right"
+        data-accent="#e8a33d"&gt;&lt;/script&gt;</pre>
+    </div>
+
+    <div class="code-card">
+      <div class="head">
+        <div><h4>Inline iframe</h4><p>Embed Circuit directly inside a page section, like the live demo above.</p></div>
+        <button class="copy-btn" data-copy-target="snippet-iframe">Copy</button>
+      </div>
+      <pre id="snippet-iframe">&lt;iframe
+  src="https://YOUR-HOST/circuit-widget.html"
+  title="Circuit electrical assistant"
+  allow="microphone"
+  style="width:100%;max-width:420px;height:640px;
+         border:none;border-radius:14px;"&gt;
+&lt;/iframe&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <table class="options-table">
+    <tr><th>Attribute</th><th>Applies to</th><th>Description</th></tr>
+    <tr><td>data-src</td><td>circuit-embed.js</td><td>Required. Full URL where circuit-widget.html is hosted.</td></tr>
+    <tr><td>data-position</td><td>circuit-embed.js</td><td>bottom-right (default) or bottom-left.</td></tr>
+    <tr><td>data-accent</td><td>circuit-embed.js</td><td>Hex color for the launcher bubble, default #e8a33d.</td></tr>
+    <tr><td>allow="microphone"</td><td>iframe</td><td>Required for voice input to work inside the frame.</td></tr>
+  </table>
+
+  <p class="integrate-note">
+    Both paths load <code>circuit-widget.html</code> in its own frame, so it never inherits the host site's styles and can't be broken by the host page's CSS or scripts. Voice input requires the page to be served over <code>https://</code> and the browser to grant microphone permission to the frame.
+  </p>
+</section>
+
+<footer>Circuit — a voice sales assistant demo. Product data shown is illustrative.</footer>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const target = document.getElementById(btn.getAttribute('data-copy-target'));
+    const text = target.textContent;
+    navigator.clipboard.writeText(text).then(()=>{
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(()=>{ btn.textContent = original; }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>
