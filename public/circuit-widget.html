@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Circuit — Electrical Sales Assistant</title>
+<title>Nova — Electrical Sales Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -127,11 +127,11 @@
 <header>
   <div class="brand">
     <div class="mark">⏚</div>
-    <h1>Circuit</h1>
+    <h1>Nova</h1>
     <span class="tag">ELECTRICAL SALES ASSISTANT</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <select id="langSelect" title="Voice input language — Circuit still replies in whatever language you speak or type"></select>
+    <select id="langSelect" title="Voice input language — Nova still replies in whatever language you speak or type"></select>
     <button id="closeBtn" title="Close" style="display:none;background:none;border:1px solid var(--line);color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;">✕</button>
   </div>
 </header>
@@ -209,7 +209,7 @@ function addMessage(role, text){
   if(role !== 'system'){
     const meta = document.createElement('span');
     meta.className='meta';
-    meta.textContent = role === 'user' ? 'You' : 'Circuit';
+    meta.textContent = role === 'user' ? 'You' : 'Nova';
     div.appendChild(meta);
   }
   const body = document.createElement('div');
@@ -248,7 +248,7 @@ function speak(text, langCode){
 }
 
 function restartListeningIfActive(){
-  // Continues the hands-free loop after Circuit finishes speaking, unless the
+  // Continues the hands-free loop after Nova finishes speaking, unless the
   // session was ended (manual stop, "done"/"okay", or a mic error).
   if(!voiceSessionActive || !recognizer || isListening) return;
   setTimeout(()=>{
@@ -261,8 +261,8 @@ function setOrbState(state){
   orb.classList.remove('listening','thinking','speaking');
   waveform.classList.remove('active');
   if(state === 'listening'){ orb.classList.add('listening'); statusText.textContent = 'Listening…'; }
-  else if(state === 'thinking'){ orb.classList.add('thinking'); statusText.textContent = 'Circuit is thinking…'; }
-  else if(state === 'speaking'){ orb.classList.add('speaking'); waveform.classList.add('active'); statusText.textContent = 'Circuit is speaking…'; }
+  else if(state === 'thinking'){ orb.classList.add('thinking'); statusText.textContent = 'Nova is thinking…'; }
+  else if(state === 'speaking'){ orb.classList.add('speaking'); waveform.classList.add('active'); statusText.textContent = 'Nova is speaking…'; }
   else { statusText.textContent = 'Tap the mic or type below to start.'; }
 }
 
@@ -272,7 +272,7 @@ let recognizer = null;
 let isListening = false;
 let voiceSessionActive = false; // true while in a hands-free continuous voice loop
 
-// Phrases that end the hands-free loop instead of being sent to Circuit as a
+// Phrases that end the hands-free loop instead of being sent to Nova as a
 // question. Checked against the whole trimmed transcript, case-insensitive,
 // with trailing punctuation ignored — so "Okay.", "done", "That's all" all match.
 const STOP_PHRASES = [
@@ -338,7 +338,7 @@ textInput.addEventListener('keydown', (e)=>{
 
 // ---------- Claude API call ----------
 function buildSystemPrompt(){
-  return `You are Circuit, a knowledgeable, friendly multilingual voice assistant for an electrical supply store.
+  return `You are Nova, a knowledgeable, friendly multilingual voice assistant for an electrical supply store.
 
 PRODUCT CATALOG (JSON):
 ${JSON.stringify(CATALOG)}
@@ -390,7 +390,7 @@ async function handleUserInput(text){
     speak(result.reply || '', lastDetectedLang);
   }catch(err){
     console.error(err);
-    addMessage('system', 'Something went wrong talking to Circuit: ' + err.message);
+    addMessage('system', 'Something went wrong talking to Nova: ' + err.message);
     setOrbState('idle');
   }finally{
     sendBtn.disabled = false;
@@ -409,7 +409,7 @@ if(window.self !== window.top){
 }
 
 // Welcome message
-addMessage('assistant', "Hi, I'm Circuit — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language. Tap the mic to talk hands-free — I'll keep listening after each reply until you say \"done\" or \"okay,\" or tap the mic again.");
+addMessage('assistant', "Hi, I'm Nova — your electrical products assistant. Ask me anything about wiring, breakers, lighting, panels, or smart home devices, in any language. Tap the mic to talk hands-free — I'll keep listening after each reply until you say \"done\" or \"okay,\" or tap the mic again.");
 </script>
 </body>
 </html>

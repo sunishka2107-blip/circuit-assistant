@@ -1,4 +1,4 @@
-// Minimal proxy server for Circuit — keeps your real Gemini API key on the
+// Minimal proxy server for Nova — keeps your real Gemini API key on the
 // server, never exposed to the browser. The widget calls this instead of
 // Google's Generative Language API directly.
 //
@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public')); // put circuit-widget.html, circuit-embed.js etc. in ./public
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-2.0-flash';
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -43,4 +43,4 @@ app.post('/api/chat', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Circuit proxy (Gemini) running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Nova proxy (Gemini) running on http://localhost:${PORT}`));
