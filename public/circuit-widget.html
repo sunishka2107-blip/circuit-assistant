@@ -396,6 +396,31 @@ Respond with STRICT JSON ONLY, no markdown fences, no commentary outside the JSO
 {"detected_language": "BCP-47 code like en-US, es-ES, fr-FR", "language_name": "English name of the language", "reply": "assistant reply text, entirely in detected_language"}`;
 }
 
+// Extracts the first complete top-level JSON object from a string, ignoring
+// anything before or after it (markdown fences, trailing commentary, etc.) —
+// needed because some Gemini model versions append extra content after the
+// JSON despite instructions to return JSON only.
+function extractFirstJSONObject(text){
+  const start = text.indexOf('{');
+  if(start === -1) throw new Error('No JSON object found in model response');
+  let depth = 0;
+  let inString = false;
+  let escapeNext = false;
+  for(let i = start; i < text.length; i++){
+    const ch = text[i];
+    if(escapeNext){ escapeNext = false; continue; }
+    if(ch === '\\'){ escapeNext = true; continue; }
+    if(ch === '"'){ inString = !inString; continue; }
+    if(inString) continue;
+    if(ch === '{') depth++;
+    else if(ch === '}'){
+      depth--;
+      if(depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  throw new Error('Unterminated JSON object in model response');
+}
+
 async function callClaude(userText){
   const contents = [
     ...history.map(h => ({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] })),
@@ -415,8 +440,8 @@ async function callClaude(userText){
   const textPart = candidate && candidate.content && candidate.content.parts &&
     candidate.content.parts.find(p => p.text);
   if(!textPart) throw new Error('No response from model' + (data.error ? (': ' + data.error.message) : ''));
-  let cleaned = textPart.text.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
-  return JSON.parse(cleaned);
+  const jsonSlice = extractFirstJSONObject(textPart.text);
+  return JSON.parse(jsonSlice);
 }
 
 async function handleUserInput(text){
